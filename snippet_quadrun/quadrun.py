@@ -19,32 +19,6 @@ from mathutils import geometry
 
 ####################################################################################################
 
-class HelloWorldPanel(bpy.types.Panel):
-	bl_idname = "OBJECT_PT_hello"
-	bl_label = "Hello World Panel"
-	bl_space_type = "PROPERTIES"
-	bl_region_type = "WINDOW"
-	bl_context = "object"
-	
-	def draw(self, context):
-		layout = self.layout
-		
-		print("Redrawing layout")
-		
-		obj = context.object
-		
-		row = layout.row()
-		row.label(text="Hello World!", icon='WORLD_DATA')
-		
-		row = layout.row()
-		row.label(text="Active Object is: " + obj.name)
-		
-		row = layout.row()
-		row.prop(obj, "name")
-		
-		row = layout.row()
-		row.operator("mesh.primitive_cube_add")
-
 # From https://blenderartists.org/forum/showthread.php?266051-compare-two-vectors
 def compareVector(v1, v2):
     return round(v1[0],4) == round(v2[0],4) and \
@@ -250,34 +224,85 @@ class FixNonPlanarEdgeBias(bpy.types.Operator):
 		
 		## optional:  Obtain intersecting edges E1 and E2; VC is one of the vertex of E1 and E2
 			
-		# Form a temporary face FTmp with VC and EB
+		# Form a temporary face bm_FTmp with VC and EB
 		
 		VS_EB = arrVertsInBiasEdge[0]
 		VE_EB = arrVertsInBiasEdge[1]
 		
-		FTmp = bm.faces.new( [bm.verts[VC], bm.verts[VS_EB], bm.verts[VE_EB]] )
-		print("FTmp.normal", FTmp.normal)
+		bm_VBP = bm.verts[VBP]
+		bm_VC = bm.verts[VC]
+		bm_VS_EB = bm.verts[VS_EB]
+		bm_VE_EB = bm.verts[VE_EB]
 		
-		# Form a temporary edge ETmp with V1 and V2
+		bm_FTmp = bm.faces.new( [bm_VC, bm_VS_EB, bm_VE_EB] )
 		
-		ETmp = bm.edges.new( [bm.verts[V1], bm.verts[V2]] )
+		arrNewEdges_FTmp = []
+		for sampleEdge in bm_FTmp.edges:
+			if EB != sampleEdge:
+				arrNewEdges_FTmp.append(sampleEdge)
 		
-		# Find pt of intersection VI, between ETmp and FTmp
-		#print(type(bm.verts[V1].co), type(bm.verts[V2].co), type(bm.verts[VC].co), type(FTmp.normal))
-		VI = geometry.intersect_line_plane(bm.verts[V1].co, bm.verts[V2].co, bm.verts[VC].co, FTmp.normal)
-		print("VI", VI)
+		print("bm_FTmp.normal", bm_FTmp.normal)
+		
+		# Form a temporary edge bm_ETmp with V1 and V2
+		
+		bm_ETmp = bm.edges.new( [bm.verts[V1], bm.verts[V2]] )
+		
+		bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+		
+		# Find pt of intersection VI, between ETmp and bm_FTmp
+		#print(type(bm.verts[V1].co), type(bm.verts[V2].co), type(bm.verts[VC].co), type(bm_FTmp.normal))
+		plane_co = bm_FTmp.calc_center_median()
+		plane_normal = bm_FTmp.normal
+		ptVI = geometry.intersect_line_plane(bm.verts[V1].co, bm.verts[V2].co,plane_co, plane_normal)
+		#print("ptVI", ptVI)
+		
+		bm_VI = bm.verts.new(ptVI)
+		#print(bm_VI.index)
 		
 		# Form another temporary edge EI_Tmp between VC and VI
+		bm_EDirTmp = bm.edges.new([bm_VC, bm_VI])
 		
 		# Obtain vertex VF at intersection of EI_Tmp and EB
+		ptVF = geometry.intersect_line_line(bm_VC.co, bm_VI.co, bm_VS_EB.co, bm_VE_EB.co)
+		if ptVF:
+			ptVF = (ptVF[0] + ptVF[1])/2
+			
+			bm_VF = bm.verts.new(ptVF)
 		
-		# Move vertex VBP to VF; Merge, ALT+M with Last option
+			# Move vertex VBP to VF; Merge, ALT+M with Last option
+			bmesh.ops.pointmerge(bm, verts=[bm_VBP], merge_co=bm_VF.co)
 		
-		# Delete all temporary faces; FTmp
+		#Cleanup
+		
+		'''	
+		ref: bmesh_operator_api.h
+
+		enum {
+			DEL_VERTS = 1,
+			DEL_EDGES, #2
+			DEL_ONLYFACES, #3
+			DEL_EDGESFACES, #4
+			DEL_FACES, #5
+			DEL_ALL, #6
+			DEL_ONLYTAGGED #7
+		}
+		'''
+
+		# Delete all temporary faces; bm_FTmp
+		bmesh.ops.delete(bm, geom=[bm_FTmp], context=3)
+		bm_FTmp = None
 		
 		# Delete all temporary edges; ETmp, EI_Tmp
+		bmesh.ops.delete(bm, geom=[bm_ETmp, bm_EDirTmp], context=2)
+		bm_ETmp = None
+		bm_EDirTmp = None
+		
+		bmesh.ops.delete(bm, geom=arrNewEdges_FTmp, context=2)
+		arrNewEdges_FTmp = None
 		
 		# Delete all temporary vertices; VI, VF
+		bmesh.ops.delete(bm, geom=[bm_VF], context=1)
+		bm_VF = None
 		
 		## optional: Remove all doubles
 		
@@ -314,13 +339,11 @@ def register():
 	
 	#
 	
-	#bpy.utils.register_class(HelloWorldPanel)
-	
 	bpy.types.VIEW3D_MT_edit_mesh.append(menu_func)
 	
 def unregister():
-	#py.utils.unregister_class(HelloWorldPanel)
 	bpy.utils.unregister_class(FindNonPlanar)
+	bpy.utils.unregister_class(FixNonPlanarEdgeBias)
 
 def main():
 	register()

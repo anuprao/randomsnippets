@@ -4,6 +4,7 @@ Steps to generate test certificate and key
 Refer articles at : 
 	https://blog.anvileight.com/posts/simple-python-http-server/
 	https://blog.miguelgrinberg.com/post/running-your-flask-application-over-https
+	https://stoplight.io/blog/python-rest-api/
 
 Key in following parameters when generating the key and the certificate
 	PEM pass phrase: test123

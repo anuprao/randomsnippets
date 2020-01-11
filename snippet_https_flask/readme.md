@@ -1,6 +1,10 @@
 Steps to generate test certificate and key
 ------------------------------------------
 
+Refer articles at : 
+	https://blog.anvileight.com/posts/simple-python-http-server/
+	https://blog.miguelgrinberg.com/post/running-your-flask-application-over-https
+
 Key in following parameters when generating the key and the certificate
 	PEM pass phrase: test123
 	Country: IN

@@ -1,6 +1,3 @@
-# Refer article at : https://blog.anvileight.com/posts/simple-python-http-server/
-#
-
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import ssl
 from io import BytesIO

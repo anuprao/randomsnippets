@@ -11,7 +11,7 @@ int main(void)
 {
    struct kevent change;    /* event we want to monitor */
    struct kevent event;     /* event that was triggered */
-   pid_t pid;
+   //pid_t pid;
    int kq, nev;
 
    /* create a new kernel event queue */

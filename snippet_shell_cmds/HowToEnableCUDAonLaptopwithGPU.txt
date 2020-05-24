@@ -1,0 +1,13 @@
+CUDA without Bumblebee
+
+You can use CUDA without bumblebee. All you need to do is ensure that the nvidia card is on:
+
+ # tee /proc/acpi/bbswitch <<< ON
+
+Now when you start a CUDA application it is going to automatically load all the necessary modules.
+
+To turn off the nvidia card after using CUDA do:
+
+ # rmmod nvidia_uvm
+ # rmmod nvidia
+ # tee /proc/acpi/bbswitch <<< OFF

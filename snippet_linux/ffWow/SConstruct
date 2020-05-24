@@ -1,0 +1,41 @@
+env = Environment()
+
+# For profiling
+#env.Append(CCFLAGS = ' -pg ')
+#env.Append(LINKFLAGS = ' -pg ')
+
+arrIncludes = [
+	'/usr/local/include',
+	'/media/palette/thirdparty/include',
+	'include', 
+	]
+
+env.Append(CPATH = arrIncludes)
+env.Append(CPPPATH = arrIncludes)
+	
+env.Append(LIBPATH = [
+	'/usr/local/lib',
+	'/media/palette/thirdparty/lib',
+	])	
+
+env.Append(LIBS = [
+	'SDL',
+	'GL', 
+	'GLU', 
+	])
+
+src = env.Library(
+	'src/src.a', 
+	[
+		'src/main.cpp',				
+	])
+
+main_app = env.Program(
+	'bin/mainapp', 
+	[
+		src[0], 
+	])
+
+Depends(main_app, src)
+
+

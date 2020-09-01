@@ -408,13 +408,13 @@ ipcHandler::ipcHandler()
 	m_tv.tv_usec = 0;
 }
 
-void ipcHandler::addNewRedir(ipc* pRedir)
+void ipcHandler::addNewRedir(ipc* pPipe)
 {
-	if(NULL != pRedir)
+	if(NULL != pPipe)
 	{
-		ipcNode* pRedirNode = new ipcNode;
-		pRedirNode->pRedir = pRedir;
-		m_RedirQueue.push(pRedirNode);
+		ipcNode* pPipeNode = new ipcNode;
+		pPipeNode->pPipe = pPipe;
+		m_RedirQueue.push(pPipeNode);
 	}
 }
 
@@ -423,34 +423,34 @@ void ipcHandler::preparePolling()
 	m_nfdReadMax = -1;
 	m_nfdWriteMax = -1;
 	
-	ipcNode* pRedirNode = NULL;
+	ipcNode* pPipeNode = NULL;
 	
 	FD_ZERO(&m_fdsetRead);
 	FD_ZERO(&m_fdsetWrite);
 		
-	pRedirNode = m_RedirQueue.peek();
-	while(NULL != pRedirNode)
+	pPipeNode = m_RedirQueue.peek();
+	while(NULL != pPipeNode)
 	{	
-		ipc* pRedir = pRedirNode->pRedir;
-		if(NULL != pRedir)
+		ipc* pPipe = pPipeNode->pPipe;
+		if(NULL != pPipe)
 		{
-			const int fdRead = pRedir->getReadFd();
-			const int fdWrite = pRedir->getWriteFd();
+			const int fdRead = pPipe->getReadFd();
+			const int fdWrite = pPipe->getWriteFd();
 				
-			pRedir->preparePolling();
+			pPipe->preparePolling();
 			
 			m_nfdReadMax = MAX(m_nfdReadMax, fdRead);
 			m_nfdWriteMax = MAX(m_nfdWriteMax, fdWrite);
 			
 			FD_SET(fdRead, &m_fdsetRead);
 			
-			if(true == pRedir->isWritePending())
+			if(true == pPipe->isWritePending())
 			{
 				FD_SET(fdWrite, &m_fdsetWrite);  
 			}
 		}
 		
-		pRedirNode = pRedirNode->next;
+		pPipeNode = pPipeNode->next;
 	}	  
 }
 
@@ -477,34 +477,34 @@ void ipcHandler::transact()
 		//printf("readyfd: %d\n",ready_fd);
 		if(ready_fd > 0)
 		{
-			ipcNode* pRedirNode = NULL;
+			ipcNode* pPipeNode = NULL;
 			
-			pRedirNode = m_RedirQueue.peek();
-			while(NULL != pRedirNode)
+			pPipeNode = m_RedirQueue.peek();
+			while(NULL != pPipeNode)
 			{	
-				ipc* pRedir = pRedirNode->pRedir;
-				if(NULL != pRedir)
+				ipc* pPipe = pPipeNode->pPipe;
+				if(NULL != pPipe)
 				{
-					const int fdRead = pRedir->getReadFd();
-					const int fdWrite = pRedir->getWriteFd();
+					const int fdRead = pPipe->getReadFd();
+					const int fdWrite = pPipe->getWriteFd();
 					
 					if(FD_ISSET(fdRead, &m_fdsetRead))
 					{	
-						pRedir->processRx();
+						pPipe->processRx();
 						
 						FD_CLR(fdRead, &m_fdsetRead);
 					}
 					
 					if(FD_ISSET(fdWrite, &m_fdsetWrite))
 					{	
-						pRedir->processTx();
+						pPipe->processTx();
 						
 						FD_CLR(fdWrite, &m_fdsetWrite);
 					}
 					
 				}
 					
-				pRedirNode = pRedirNode->next; 
+				pPipeNode = pPipeNode->next; 
 			}
 		}
 	}

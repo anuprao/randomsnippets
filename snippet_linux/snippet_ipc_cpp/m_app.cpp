@@ -45,17 +45,17 @@ int main()
 {
 	bool bDone = false;
 	
-    ipcHandler* pRedirHandler = new ipcHandler();
+    ipcHandler* pPipeHandler = new ipcHandler();
     
     ipcPipe* pPipe = new ipcPipe(m_TX_s_RX_Pipe, s_TX_m_RX_Pipe);
     
     pPipe->setup();
     
-    pRedirHandler->addNewRedir(pPipe);
+    pPipeHandler->addNewRedir(pPipe);
     
     while(false == bDone)
     {
-		pRedirHandler->transact();
+		pPipeHandler->transact();
 		
 		processMsgsOnPipe(pPipe);
 	}
@@ -63,8 +63,8 @@ int main()
     delete pPipe;
     pPipe = NULL;
 
-    delete pRedirHandler;
-    pRedirHandler = NULL;
+    delete pPipeHandler;
+    pPipeHandler = NULL;
     
     return 0;
 }

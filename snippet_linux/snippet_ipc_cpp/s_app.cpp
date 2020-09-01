@@ -47,13 +47,13 @@ int main()
 	
 	char tmpBuffer[MAX_MSG_LENGTH+1];
 	
-    ipcHandler* pRedirHandler = new ipcHandler();
+    ipcHandler* pPipeHandler = new ipcHandler();
     
     ipcPipe* pPipe = new ipcPipe(s_TX_m_RX_Pipe, m_TX_s_RX_Pipe);
     
     pPipe->setup();
     
-    pRedirHandler->addNewRedir(pPipe);
+    pPipeHandler->addNewRedir(pPipe);
     
     msleep(2000);
     
@@ -68,7 +68,7 @@ int main()
     
     while(false == bDone)
     {
-		pRedirHandler->transact();
+		pPipeHandler->transact();
 		
 		processMsgsOnPipe(pPipe);
 	}
@@ -76,8 +76,8 @@ int main()
     delete pPipe;
     pPipe = NULL;
 
-    delete pRedirHandler;
-    pRedirHandler = NULL;
+    delete pPipeHandler;
+    pPipeHandler = NULL;
     
     return 0;
 }

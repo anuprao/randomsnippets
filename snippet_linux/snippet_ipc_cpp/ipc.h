@@ -68,7 +68,7 @@ class ipc
 
 struct ipcNode
 {
-	ipc*	   pRedir;
+	ipc*	   pPipe;
 	ipcNode* next;
 };
 

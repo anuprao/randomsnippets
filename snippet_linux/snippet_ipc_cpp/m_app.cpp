@@ -51,7 +51,7 @@ int main()
     
     pPipe->setup();
     
-    pPipeHandler->addNewRedir(pPipe);
+    pPipeHandler->addNewIpc(pPipe);
     
     while(false == bDone)
     {

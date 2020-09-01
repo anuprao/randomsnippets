@@ -53,7 +53,7 @@ int main()
     
     pPipe->setup();
     
-    pPipeHandler->addNewRedir(pPipe);
+    pPipeHandler->addNewIpc(pPipe);
     
     msleep(2000);
     

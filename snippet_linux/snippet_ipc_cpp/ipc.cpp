@@ -385,13 +385,13 @@ ipcHandler::ipcHandler()
 	m_tv.tv_usec = 0;
 }
 
-void ipcHandler::addNewRedir(ipc* pPipe)
+void ipcHandler::addNewIpc(ipc* pPipe)
 {
 	if(NULL != pPipe)
 	{
 		ipcNode* pPipeNode = new ipcNode;
 		pPipeNode->pPipe = pPipe;
-		m_RedirQueue.push(pPipeNode);
+		m_IpcQueue.push(pPipeNode);
 	}
 }
 
@@ -405,7 +405,7 @@ void ipcHandler::preparePolling()
 	FD_ZERO(&m_fdsetRead);
 	FD_ZERO(&m_fdsetWrite);
 		
-	pPipeNode = m_RedirQueue.peek();
+	pPipeNode = m_IpcQueue.peek();
 	while(NULL != pPipeNode)
 	{	
 		ipc* pPipe = pPipeNode->pPipe;
@@ -456,7 +456,7 @@ void ipcHandler::transact()
 		{
 			ipcNode* pPipeNode = NULL;
 			
-			pPipeNode = m_RedirQueue.peek();
+			pPipeNode = m_IpcQueue.peek();
 			while(NULL != pPipeNode)
 			{	
 				ipc* pPipe = pPipeNode->pPipe;

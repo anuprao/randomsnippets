@@ -138,13 +138,13 @@ class ipcHandler
         
         struct timeval m_tv;
         
-        ipcQueue	m_RedirQueue;
+        ipcQueue	m_IpcQueue;
         
 	public:
         
 		ipcHandler();
 		
-		void addNewRedir(ipc* p);
+		void addNewIpc(ipc* p);
 		
 		void preparePolling();
 		

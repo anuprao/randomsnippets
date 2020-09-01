@@ -20,6 +20,7 @@ struct msgNode
 	msgNode* next;
 };
 
+// Credit Ref: https://www.techiedelight.com/queue-implementation-cpp/
 class msgQueue
 {
 	protected:

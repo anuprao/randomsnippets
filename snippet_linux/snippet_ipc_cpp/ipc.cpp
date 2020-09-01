@@ -107,29 +107,6 @@ msgQueue::~msgQueue()
 	rear=NULL;
 }
 
-class ipcManager 
-{
-	static ipcManager* ipcInstance;
-	
-	protected:
-		ipcManager()
-		{
-		}
-
-	public:
-		static ipcManager* getInstance() 
-		{
-			if (!ipcInstance)
-			{
-				ipcInstance = new ipcManager;
-			}
-			
-			return ipcInstance;
-   		}
-};
-
-ipcManager* ipcManager::ipcInstance = NULL;
-
 ipc::ipc()
 {
 	m_fdRx = -1;

@@ -51,7 +51,7 @@ int main()
     
     pPipe->setup();
     
-    pPipeHandler->addNewIpc(pPipe);
+    pPipeHandler->add(pPipe);
     
     while(false == bDone)
     {

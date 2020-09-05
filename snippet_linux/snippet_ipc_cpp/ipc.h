@@ -97,6 +97,7 @@ class ipcPipe : public ipc
     
 	    const char* m_pfnWrite;
 	    const char* m_pfnRead;
+	    
 	    const char* m_pWrkDir;
 
 		msgQueue m_TxMsgQueue;
@@ -126,6 +127,48 @@ class ipcPipe : public ipc
 	    ~ipcPipe();
 };
 
+class ipcProcess : public ipc
+{
+    protected:
+	    
+	    const char* m_pStrCmd;
+	    const char* m_pWrkDir;
+        int	m_fdPtyMaster;
+        int m_pidChild;
+
+		msgQueue m_TxMsgQueue;
+		msgQueue m_RxMsgQueue;
+        
+        int m_nfdWriteMax;
+        int m_nfdReadMax;
+		
+    public:
+        
+	    ipcProcess(const char* pStrCmd, const char* pWrkDir);
+	    
+	    int setup();
+	    
+	    virtual const int getReadFd();
+	    
+	    virtual const int getWriteFd();
+	
+	    virtual void preparePolling();
+	    
+	    int txData(const char* pSrcbuffer, int nLength);
+		
+	    int rxData(char* pDstbuffer, int nMaxLength);
+	    
+	    virtual void processRx();
+		
+		virtual void processTx();
+		
+		virtual bool isWritePending();
+		
+		virtual void exec(char* const args[]);
+	    
+	    ~ipcProcess();
+};
+
 class ipcHandler
 {
 	protected:
@@ -144,7 +187,7 @@ class ipcHandler
         
 		ipcHandler();
 		
-		void addNewIpc(ipc* p);
+		void add(ipc* p);
 		
 		void preparePolling();
 		

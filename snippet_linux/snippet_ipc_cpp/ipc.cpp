@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -9,6 +10,15 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/poll.h>
+#include <sys/select.h>
+#include <sys/wait.h>
+#include <sys/ioctl.h>
+
+#if 1
+	#include <pty.h>
+#else
+	#include <util.h>
+#endif
 
 #include "ipc.h" 
 
@@ -213,7 +223,6 @@ ipcQueue::~ipcQueue()
 	rear=NULL;
 }
 
-
 ipcPipe::ipcPipe(const char* pfnWrite, const char* pfnRead)
 {	
 	m_pfnWrite = pfnWrite;
@@ -360,7 +369,7 @@ void ipcPipe::processTx()
 		{
 			write(m_fdTx, pTmpMsg->buffer, pTmpMsg->length);
 			//TODO: Use fsync only for unbuffered transfers
-			fsync(m_fdTx);
+			//fsync(m_fdTx);
 		}
 		
 		//free msg
@@ -372,6 +381,175 @@ void ipcPipe::processTx()
 ipcPipe::~ipcPipe()
 {
 }
+ 
+ipcProcess::ipcProcess(const char* pStrCmd, const char* pWrkDir)
+{		    
+	m_pStrCmd = pStrCmd;
+	m_pWrkDir = pWrkDir;
+	m_fdPtyMaster = -1;
+	m_pidChild = -1;
+	
+	m_nfdWriteMax = -1;
+	m_nfdReadMax = -1;
+}
+
+int ipcProcess::setup()
+{
+	m_nfdWriteMax = 0;
+	m_nfdReadMax = 0;
+	
+	m_pidChild = forkpty(&m_fdPtyMaster, NULL, NULL, NULL);
+	
+	return m_pidChild;
+}
+
+const int ipcProcess::getReadFd()
+{
+	return m_fdPtyMaster;
+}
+
+const int ipcProcess::getWriteFd()
+{
+	return m_fdPtyMaster;
+}
+	    
+void ipcProcess::preparePolling()
+{
+	struct termios tios;
+	
+	tcgetattr(m_fdPtyMaster, &tios);
+	tios.c_lflag &= ~(ECHO | ECHONL);
+	tcsetattr(m_fdPtyMaster, TCSAFLUSH, &tios);
+	
+	m_nfdWriteMax = MAX(m_nfdWriteMax, m_fdPtyMaster);
+	m_nfdReadMax = MAX(m_nfdReadMax, m_fdPtyMaster);
+	
+	//printf("m_nfdWriteMax %d\n", m_nfdWriteMax);
+	//printf("m_nfdReadMax %d\n", m_nfdReadMax);  		  
+}
+
+int ipcProcess::txData(const char* pSrcbuffer, int nLength)
+{
+	int nWriteLen = -1;
+	if(NULL != pSrcbuffer)
+	{
+		while(0 < nLength)
+		{
+			nWriteLen = nLength;
+			if(MAX_MSG_LENGTH < nWriteLen)
+			{
+				// Over write 
+				nWriteLen = MAX_MSG_LENGTH;
+			}
+			
+			msgNode* pTmpMsg = new msgNode;
+			
+			pTmpMsg->length = nWriteLen;
+			memcpy(pTmpMsg->buffer, pSrcbuffer, nWriteLen);
+				
+			m_TxMsgQueue.push(pTmpMsg);
+			
+			nLength = nLength - nWriteLen;
+			pSrcbuffer = pSrcbuffer + nLength;
+		}
+	}
+	
+	return nWriteLen;
+}
+
+bool ipcProcess::isWritePending()
+{
+	bool bRet = !m_TxMsgQueue.isEmpty();
+	
+	return bRet;
+}
+
+int ipcProcess::rxData(char* pDstbuffer, int nMaxLength)
+{
+	int nReadLen = -1;
+	msgNode* pTmpMsg = m_RxMsgQueue.peek();
+	
+	if(NULL != pTmpMsg)
+	{
+		if(0 < pTmpMsg->length)
+		{
+			nReadLen = pTmpMsg->length;
+			if(nMaxLength < nReadLen)
+			{
+				// Under read
+				nReadLen = nMaxLength;
+			}
+			
+			memcpy(pDstbuffer, pTmpMsg->buffer, nReadLen);
+			
+			// Todo: fix under read		
+			pTmpMsg->length = pTmpMsg->length - nReadLen;	
+			if(0 < pTmpMsg->length)
+			{
+				memcpy(pTmpMsg->buffer, pTmpMsg->buffer + nReadLen, pTmpMsg->length);
+			}
+		}
+		
+		//free msg if everything is read
+		if(0 == pTmpMsg->length)
+		{
+			// pTmpMsg is orwriteen with same value to avoid compiler warning
+			// pop is necessary
+			pTmpMsg = m_RxMsgQueue.pop();
+			
+			free(pTmpMsg);
+			pTmpMsg = NULL;
+		}
+	}
+	
+	return nReadLen;
+}
+
+void ipcProcess::processRx()
+{
+	msgNode* pOutputMsg = new msgNode;
+	
+	pOutputMsg->length = read(m_fdPtyMaster, pOutputMsg->buffer, MAX_MSG_LENGTH);
+	
+	if(0 < pOutputMsg->length)
+	{
+		//push msg into output msgQueue
+		m_RxMsgQueue.push(pOutputMsg);
+		
+		//printf("Output msg length: %d\n",pOutputMsg->length);
+	}
+}
+
+void ipcProcess::processTx()
+{
+	msgNode* pTmpMsg = m_TxMsgQueue.pop();
+	
+	if(NULL != pTmpMsg)
+	{
+		if(0 < pTmpMsg->length)
+		{
+			write(m_fdPtyMaster, pTmpMsg->buffer, pTmpMsg->length);
+			//TODO: Use fsync only for unbuffered transfers
+			//fsync(m_fdPtyMaster);
+		}
+		
+		//free msg
+		free(pTmpMsg);
+		pTmpMsg = NULL;
+	}
+}
+
+void ipcProcess::exec(char* const args[])
+{
+	execvp(args[0], args); 
+	
+	printf("Alert ! Check child process execution !!\n");
+	exit(1);
+}
+	    
+ipcProcess::~ipcProcess()
+{
+} 
         
 ipcHandler::ipcHandler()
 {	
@@ -385,7 +563,7 @@ ipcHandler::ipcHandler()
 	m_tv.tv_usec = 0;
 }
 
-void ipcHandler::addNewIpc(ipc* pPipe)
+void ipcHandler::add(ipc* pPipe)
 {
 	if(NULL != pPipe)
 	{

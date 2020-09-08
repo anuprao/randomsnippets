@@ -54,7 +54,7 @@ void msgQueue::push(msgNode* tempMsg)
 {
 	tempMsg->next = NULL;
 	
-	if(front == NULL)
+	if(NULL == front)
 	{
 		front = tempMsg;
 		rear = tempMsg;
@@ -86,7 +86,7 @@ msgNode* msgQueue::pop()
 {
 	msgNode* tempMsg;
 	
-	if(front == NULL)
+	if(NULL == front)
 	{
 		tempMsg = NULL;
 	}
@@ -107,7 +107,7 @@ msgNode* msgQueue::pop()
 
 msgQueue::~msgQueue()
 {
-	while(front!=NULL)
+	while(NULL != front)
 	{
 		msgNode *temp=front;
 		front=front->next;
@@ -172,7 +172,7 @@ void ipcQueue::push(ipcNode* tempMsg)
 {
 	tempMsg->next = NULL;
 	
-	if(front == NULL)
+	if(NULL == front)
 	{
 		front = tempMsg;
 		rear = tempMsg;
@@ -192,7 +192,7 @@ ipcNode* ipcQueue::pop()
 {
 	ipcNode* tempMsg;
 	
-	if(front == NULL)
+	if(NULL == front)
 	{
 		//underflow
 		tempMsg = NULL;
@@ -213,7 +213,7 @@ ipcNode* ipcQueue::pop()
 
 ipcQueue::~ipcQueue()
 {
-	while(front!=NULL)
+	while(NULL != front)
 	{
 		ipcNode *temp=front;
 		front=front->next;

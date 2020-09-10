@@ -15,12 +15,12 @@
 
 void processMsgsOnPty(ipcProcess* pProcess)
 {
-	char tmpBuffer[MAX_MSG_LENGTH+1];
+	char tmpBuffer[MAX_CHUNK_LENGTH+1];
 	int	nReadLen = -1;
 	int	nWriteLen = -1;
 	
 	// Reading part
-	nReadLen = pProcess->rxData(tmpBuffer, MAX_MSG_LENGTH);
+	nReadLen = pProcess->rxData(tmpBuffer, MAX_CHUNK_LENGTH);
 	//printf("nReadLen : %d\n", nReadLen);
 	if(0 < nReadLen) 
 	{

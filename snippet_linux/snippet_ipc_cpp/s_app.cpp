@@ -15,12 +15,12 @@
 
 void processMsgsOnPipe(ipcPipe* pPipe)
 {
-	char tmpBuffer[MAX_MSG_LENGTH+1];
+	char tmpBuffer[MAX_CHUNK_LENGTH+1];
 	int	nReadLen = -1;
 	int	nWriteLen = -1;
 	
 	// Reading part
-	nReadLen = pPipe->rxData(tmpBuffer, MAX_MSG_LENGTH);
+	nReadLen = pPipe->rxData(tmpBuffer, MAX_CHUNK_LENGTH);
 	if(0 < nReadLen) 
 	{
 		// Do something with the read data
@@ -45,7 +45,7 @@ int main()
 {
 	bool bDone = false;
 	
-	char tmpBuffer[MAX_MSG_LENGTH+1];
+	char tmpBuffer[MAX_CHUNK_LENGTH+1];
 	
     ipcHandler* pPipeHandler = new ipcHandler();
     

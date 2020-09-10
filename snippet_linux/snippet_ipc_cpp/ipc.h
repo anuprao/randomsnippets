@@ -1,5 +1,5 @@
 
-#define MAX_MSG_LENGTH 128
+#define MAX_CHUNK_LENGTH 128
 
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 
@@ -13,32 +13,32 @@
 
 int msleep(long msec);
 
-struct msgNode
+struct chunkNode
 {
 	int length;
-	char buffer[MAX_MSG_LENGTH];
-	msgNode* next;
+	char buffer[MAX_CHUNK_LENGTH];
+	chunkNode* pNext;
 };
 
 // Credit Ref: https://www.techiedelight.com/queue-implementation-cpp/
-class msgQueue
+class chunkQueue
 {
 	protected:
-		msgNode* rear;
-		msgNode* front;
+		chunkNode* pLast;
+		chunkNode* pFirst;
 		
 	public:
-		msgQueue();
+		chunkQueue();
 
-		void push(msgNode* tempMsg);
+		void push(chunkNode* tempChunk);
 
-		msgNode* peek();
+		chunkNode* peek();
 		
 		bool isEmpty();
 		
-		msgNode* pop();
+		chunkNode* pop();
 
-		~msgQueue();
+		~chunkQueue();
 };
 
 class ipc
@@ -69,20 +69,20 @@ class ipc
 
 struct ipcNode
 {
-	ipc*	   pPipe;
-	ipcNode* next;
+	ipc*		pPipe;
+	ipcNode*	pNext;
 };
 
 class ipcQueue
 {
 	protected:
-		ipcNode* rear;
-		ipcNode* front;
+		ipcNode*	pLast;
+		ipcNode*	pFirst;
 		
 	public:
 		ipcQueue();
 
-		void push(ipcNode* tempMsg);
+		void push(ipcNode* tempChunk);
 
 		ipcNode* peek();
 		
@@ -100,8 +100,8 @@ class ipcPipe : public ipc
 	    
 	    const char* m_pWrkDir;
 
-		msgQueue m_TxMsgQueue;
-		msgQueue m_RxMsgQueue;
+		chunkQueue m_TxChunkQueue;
+		chunkQueue m_RxChunkQueue;
         
         int m_nfdWriteMax;
         int m_nfdReadMax;
@@ -136,8 +136,8 @@ class ipcProcess : public ipc
         int	m_fdPtyMaster;
         int m_pidChild;
 
-		msgQueue m_TxMsgQueue;
-		msgQueue m_RxMsgQueue;
+		chunkQueue m_TxChunkQueue;
+		chunkQueue m_RxChunkQueue;
         
         int m_nfdWriteMax;
         int m_nfdReadMax;

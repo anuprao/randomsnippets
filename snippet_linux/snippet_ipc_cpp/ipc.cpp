@@ -44,37 +44,37 @@ int msleep(long msec)
     return res;
 }
 
-msgQueue::msgQueue()
+chunkQueue::chunkQueue()
 {
-	rear = NULL;
-	front = NULL;
+	pLast = NULL;
+	pFirst = NULL;
 }
 
-void msgQueue::push(msgNode* tempMsg)
+void chunkQueue::push(chunkNode* tempChunk)
 {
-	tempMsg->next = NULL;
+	tempChunk->pNext = NULL;
 	
-	if(NULL == front)
+	if(NULL == pFirst)
 	{
-		front = tempMsg;
-		rear = tempMsg;
+		pFirst = tempChunk;
+		pLast = tempChunk;
 	}
 	else{
-		rear->next = tempMsg;
-		rear = tempMsg;
+		pLast->pNext = tempChunk;
+		pLast = tempChunk;
 	}
 }
 
-msgNode* msgQueue::peek()
+chunkNode* chunkQueue::peek()
 {
-	return front;
+	return pFirst;
 }
 
-bool msgQueue::isEmpty()
+bool chunkQueue::isEmpty()
 {
 	bool bRet = false;
 	
-	if(NULL == front)
+	if(NULL == pFirst)
 	{
 		bRet = true;
 	} 
@@ -82,39 +82,40 @@ bool msgQueue::isEmpty()
 	return bRet;
 }
 
-msgNode* msgQueue::pop()
+chunkNode* chunkQueue::pop()
 {
-	msgNode* tempMsg;
+	chunkNode* tempChunk;
 	
-	if(NULL == front)
+	if(NULL == pFirst)
 	{
-		tempMsg = NULL;
+		tempChunk = NULL;
 	}
 	
-	if(front == rear)
+	if(pFirst == pLast)
 	{
-		tempMsg = front;
-		front = rear = NULL;
+		tempChunk = pFirst;
+		pFirst = pLast = NULL;
 	}
 	else
 	{
-		tempMsg = front;
-		front = front->next;
+		tempChunk = pFirst;
+		pFirst = pFirst->pNext;
 	}
 	
-	return tempMsg;
+	return tempChunk;
 }
 
-msgQueue::~msgQueue()
+chunkQueue::~chunkQueue()
 {
-	while(NULL != front)
+	while(NULL != pFirst)
 	{
-		msgNode *temp=front;
-		front=front->next;
+		chunkNode *temp=pFirst;
+		pFirst=pFirst->pNext;
+		
 		delete temp;
 	}
 	
-	rear=NULL;
+	pLast=NULL;
 }
 
 ipc::ipc()
@@ -164,63 +165,63 @@ ipc::~ipc()
 
 ipcQueue::ipcQueue()
 {
-	rear = NULL;
-	front = NULL;
+	pLast = NULL;
+	pFirst = NULL;
 }
 
-void ipcQueue::push(ipcNode* tempMsg)
+void ipcQueue::push(ipcNode* tempChunk)
 {
-	tempMsg->next = NULL;
+	tempChunk->pNext = NULL;
 	
-	if(NULL == front)
+	if(NULL == pFirst)
 	{
-		front = tempMsg;
-		rear = tempMsg;
+		pFirst = tempChunk;
+		pLast = tempChunk;
 	}
 	else{
-		rear->next = tempMsg;
-		rear = tempMsg;
+		pLast->pNext = tempChunk;
+		pLast = tempChunk;
 	}
 }
 
 ipcNode* ipcQueue::peek()
 {
-	return front;
+	return pFirst;
 }
 
 ipcNode* ipcQueue::pop()
 {
-	ipcNode* tempMsg;
+	ipcNode* tempChunk;
 	
-	if(NULL == front)
+	if(NULL == pFirst)
 	{
 		//underflow
-		tempMsg = NULL;
+		tempChunk = NULL;
 	}
-	if(front == rear)
+	if(pFirst == pLast)
 	{
-		tempMsg = front;
-		front = rear = NULL;
+		tempChunk = pFirst;
+		pFirst = pLast = NULL;
 	}
 	else
 	{
-		tempMsg = front;
-		front = front->next;
+		tempChunk = pFirst;
+		pFirst = pFirst->pNext;
 	}
 	
-	return tempMsg;
+	return tempChunk;
 }
 
 ipcQueue::~ipcQueue()
 {
-	while(NULL != front)
+	while(NULL != pFirst)
 	{
-		ipcNode *temp=front;
-		front=front->next;
+		ipcNode *temp=pFirst;
+		pFirst=pFirst->pNext;
 		delete temp;
 	}
 	
-	rear=NULL;
+	pLast=NULL;
 }
 
 ipcPipe::ipcPipe(const char* pfnWrite, const char* pfnRead)
@@ -275,18 +276,18 @@ int ipcPipe::txData(const char* pSrcbuffer, int nLength)
 		while(0 < nLength)
 		{
 			nWriteLen = nLength;
-			if(MAX_MSG_LENGTH < nWriteLen)
+			if(MAX_CHUNK_LENGTH < nWriteLen)
 			{
 				// Over write 
-				nWriteLen = MAX_MSG_LENGTH;
+				nWriteLen = MAX_CHUNK_LENGTH;
 			}
 			
-			msgNode* pTmpMsg = new msgNode;
+			chunkNode* pTmpChunk = new chunkNode;
 			
-			pTmpMsg->length = nWriteLen;
-			memcpy(pTmpMsg->buffer, pSrcbuffer, nWriteLen);
+			pTmpChunk->length = nWriteLen;
+			memcpy(pTmpChunk->buffer, pSrcbuffer, nWriteLen);
 				
-			m_TxMsgQueue.push(pTmpMsg);
+			m_TxChunkQueue.push(pTmpChunk);
 			
 			nLength = nLength - nWriteLen;
 			pSrcbuffer = pSrcbuffer + nLength;
@@ -298,7 +299,7 @@ int ipcPipe::txData(const char* pSrcbuffer, int nLength)
 
 bool ipcPipe::isWritePending()
 {
-	bool bRet = !m_TxMsgQueue.isEmpty();
+	bool bRet = !m_TxChunkQueue.isEmpty();
 	
 	return bRet;
 }
@@ -306,38 +307,38 @@ bool ipcPipe::isWritePending()
 int ipcPipe::rxData(char* pDstbuffer, int nMaxLength)
 {
 	int nReadLen = -1;
-	msgNode* pTmpMsg = m_RxMsgQueue.peek();
+	chunkNode* pTmpChunk = m_RxChunkQueue.peek();
 	
-	if(NULL != pTmpMsg)
+	if(NULL != pTmpChunk)
 	{
-		if(0 < pTmpMsg->length)
+		if(0 < pTmpChunk->length)
 		{
-			nReadLen = pTmpMsg->length;
+			nReadLen = pTmpChunk->length;
 			if(nMaxLength < nReadLen)
 			{
 				// Under read
 				nReadLen = nMaxLength;
 			}
 			
-			memcpy(pDstbuffer, pTmpMsg->buffer, nReadLen);
+			memcpy(pDstbuffer, pTmpChunk->buffer, nReadLen);
 			
 			// Todo: fix under read		
-			pTmpMsg->length = pTmpMsg->length - nReadLen;	
-			if(0 < pTmpMsg->length)
+			pTmpChunk->length = pTmpChunk->length - nReadLen;	
+			if(0 < pTmpChunk->length)
 			{
-				memcpy(pTmpMsg->buffer, pTmpMsg->buffer + nReadLen, pTmpMsg->length);
+				memcpy(pTmpChunk->buffer, pTmpChunk->buffer + nReadLen, pTmpChunk->length);
 			}
 		}
 		
-		//free msg if everything is read
-		if(0 == pTmpMsg->length)
+		//free chunk if everything is read
+		if(0 == pTmpChunk->length)
 		{
-			// pTmpMsg is orwriteen with same value to avoid compiler warning
+			// pTmpChunk is orwriteen with same value to avoid compiler warning
 			// pop is necessary
-			pTmpMsg = m_RxMsgQueue.pop();
+			pTmpChunk = m_RxChunkQueue.pop();
 			
-			free(pTmpMsg);
-			pTmpMsg = NULL;
+			free(pTmpChunk);
+			pTmpChunk = NULL;
 		}
 	}
 	
@@ -346,35 +347,35 @@ int ipcPipe::rxData(char* pDstbuffer, int nMaxLength)
 
 void ipcPipe::processRx()
 {
-	msgNode* pOutputMsg = new msgNode;
+	chunkNode* pOutputChunk = new chunkNode;
 	
-	pOutputMsg->length = read(m_fdRx, pOutputMsg->buffer, MAX_MSG_LENGTH);
+	pOutputChunk->length = read(m_fdRx, pOutputChunk->buffer, MAX_CHUNK_LENGTH);
 	
-	if(0 < pOutputMsg->length)
+	if(0 < pOutputChunk->length)
 	{
-		//push msg into output msgQueue
-		m_RxMsgQueue.push(pOutputMsg);
+		//push chunk into output chunkQueue
+		m_RxChunkQueue.push(pOutputChunk);
 		
-		//printf("Output msg length: %d\n",pOutputMsg->length);
+		//printf("Output chunk length: %d\n",pOutputChunk->length);
 	}
 }
 
 void ipcPipe::processTx()
 {
-	msgNode* pTmpMsg = m_TxMsgQueue.pop();
+	chunkNode* pTmpChunk = m_TxChunkQueue.pop();
 	
-	if(NULL != pTmpMsg)
+	if(NULL != pTmpChunk)
 	{
-		if(0 < pTmpMsg->length)
+		if(0 < pTmpChunk->length)
 		{
-			write(m_fdTx, pTmpMsg->buffer, pTmpMsg->length);
+			write(m_fdTx, pTmpChunk->buffer, pTmpChunk->length);
 			//TODO: Use fsync only for unbuffered transfers
 			//fsync(m_fdTx);
 		}
 		
-		//free msg
-		free(pTmpMsg);
-		pTmpMsg = NULL;
+		//free chunk
+		free(pTmpChunk);
+		pTmpChunk = NULL;
 	}
 }
 
@@ -436,18 +437,18 @@ int ipcProcess::txData(const char* pSrcbuffer, int nLength)
 		while(0 < nLength)
 		{
 			nWriteLen = nLength;
-			if(MAX_MSG_LENGTH < nWriteLen)
+			if(MAX_CHUNK_LENGTH < nWriteLen)
 			{
 				// Over write 
-				nWriteLen = MAX_MSG_LENGTH;
+				nWriteLen = MAX_CHUNK_LENGTH;
 			}
 			
-			msgNode* pTmpMsg = new msgNode;
+			chunkNode* pTmpChunk = new chunkNode;
 			
-			pTmpMsg->length = nWriteLen;
-			memcpy(pTmpMsg->buffer, pSrcbuffer, nWriteLen);
+			pTmpChunk->length = nWriteLen;
+			memcpy(pTmpChunk->buffer, pSrcbuffer, nWriteLen);
 				
-			m_TxMsgQueue.push(pTmpMsg);
+			m_TxChunkQueue.push(pTmpChunk);
 			
 			nLength = nLength - nWriteLen;
 			pSrcbuffer = pSrcbuffer + nLength;
@@ -459,7 +460,7 @@ int ipcProcess::txData(const char* pSrcbuffer, int nLength)
 
 bool ipcProcess::isWritePending()
 {
-	bool bRet = !m_TxMsgQueue.isEmpty();
+	bool bRet = !m_TxChunkQueue.isEmpty();
 	
 	return bRet;
 }
@@ -467,38 +468,38 @@ bool ipcProcess::isWritePending()
 int ipcProcess::rxData(char* pDstbuffer, int nMaxLength)
 {
 	int nReadLen = -1;
-	msgNode* pTmpMsg = m_RxMsgQueue.peek();
+	chunkNode* pTmpChunk = m_RxChunkQueue.peek();
 	
-	if(NULL != pTmpMsg)
+	if(NULL != pTmpChunk)
 	{
-		if(0 < pTmpMsg->length)
+		if(0 < pTmpChunk->length)
 		{
-			nReadLen = pTmpMsg->length;
+			nReadLen = pTmpChunk->length;
 			if(nMaxLength < nReadLen)
 			{
 				// Under read
 				nReadLen = nMaxLength;
 			}
 			
-			memcpy(pDstbuffer, pTmpMsg->buffer, nReadLen);
+			memcpy(pDstbuffer, pTmpChunk->buffer, nReadLen);
 			
 			// Todo: fix under read		
-			pTmpMsg->length = pTmpMsg->length - nReadLen;	
-			if(0 < pTmpMsg->length)
+			pTmpChunk->length = pTmpChunk->length - nReadLen;	
+			if(0 < pTmpChunk->length)
 			{
-				memcpy(pTmpMsg->buffer, pTmpMsg->buffer + nReadLen, pTmpMsg->length);
+				memcpy(pTmpChunk->buffer, pTmpChunk->buffer + nReadLen, pTmpChunk->length);
 			}
 		}
 		
-		//free msg if everything is read
-		if(0 == pTmpMsg->length)
+		//free chunk if everything is read
+		if(0 == pTmpChunk->length)
 		{
-			// pTmpMsg is orwriteen with same value to avoid compiler warning
+			// pTmpChunk is orwritten with same value to avoid compiler warning
 			// pop is necessary
-			pTmpMsg = m_RxMsgQueue.pop();
+			pTmpChunk = m_RxChunkQueue.pop();
 			
-			free(pTmpMsg);
-			pTmpMsg = NULL;
+			free(pTmpChunk);
+			pTmpChunk = NULL;
 		}
 	}
 	
@@ -507,35 +508,35 @@ int ipcProcess::rxData(char* pDstbuffer, int nMaxLength)
 
 void ipcProcess::processRx()
 {
-	msgNode* pOutputMsg = new msgNode;
+	chunkNode* pOutputChunk = new chunkNode;
 	
-	pOutputMsg->length = read(m_fdPtyMaster, pOutputMsg->buffer, MAX_MSG_LENGTH);
+	pOutputChunk->length = read(m_fdPtyMaster, pOutputChunk->buffer, MAX_CHUNK_LENGTH);
 	
-	if(0 < pOutputMsg->length)
+	if(0 < pOutputChunk->length)
 	{
-		//push msg into output msgQueue
-		m_RxMsgQueue.push(pOutputMsg);
+		//push chunk into output chunkQueue
+		m_RxChunkQueue.push(pOutputChunk);
 		
-		//printf("Output msg length: %d\n",pOutputMsg->length);
+		//printf("Output chunk length: %d\n",pOutputChunk->length);
 	}
 }
 
 void ipcProcess::processTx()
 {
-	msgNode* pTmpMsg = m_TxMsgQueue.pop();
+	chunkNode* pTmpChunk = m_TxChunkQueue.pop();
 	
-	if(NULL != pTmpMsg)
+	if(NULL != pTmpChunk)
 	{
-		if(0 < pTmpMsg->length)
+		if(0 < pTmpChunk->length)
 		{
-			write(m_fdPtyMaster, pTmpMsg->buffer, pTmpMsg->length);
+			write(m_fdPtyMaster, pTmpChunk->buffer, pTmpChunk->length);
 			//TODO: Use fsync only for unbuffered transfers
 			//fsync(m_fdPtyMaster);
 		}
 		
-		//free msg
-		free(pTmpMsg);
-		pTmpMsg = NULL;
+		//free chunk
+		free(pTmpChunk);
+		pTmpChunk = NULL;
 	}
 }
 
@@ -605,7 +606,7 @@ void ipcHandler::preparePolling()
 			}
 		}
 		
-		pPipeNode = pPipeNode->next;
+		pPipeNode = pPipeNode->pNext;
 	}	  
 }
 
@@ -659,7 +660,7 @@ void ipcHandler::transact()
 					
 				}
 					
-				pPipeNode = pPipeNode->next; 
+				pPipeNode = pPipeNode->pNext; 
 			}
 		}
 	}

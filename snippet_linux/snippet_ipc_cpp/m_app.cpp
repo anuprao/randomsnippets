@@ -13,7 +13,7 @@
 #include "app.h" 
 #include "ipc.h" 
 
-void processMsgsOnPipe(ipcPipe* pPipe)
+void processMsgs(ipcPipe* pPipe)
 {
 	char tmpBuffer[MAX_CHUNK_LENGTH+1];
 	int	nReadLen = -1;
@@ -57,7 +57,7 @@ int main()
     {
 		pPipeHandler->transact();
 		
-		processMsgsOnPipe(pPipe);
+		processMsgs(pPipe);
 	}
 
     delete pPipe;

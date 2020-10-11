@@ -290,7 +290,7 @@ int ipcPipe::txData(const char* pSrcbuffer, int nLength)
 			m_TxChunkQueue.push(pTmpChunk);
 			
 			nLength = nLength - nWriteLen;
-			pSrcbuffer = pSrcbuffer + nLength;
+			pSrcbuffer = pSrcbuffer + nWriteLen;
 		}
 	}
 	
@@ -451,7 +451,7 @@ int ipcProcess::txData(const char* pSrcbuffer, int nLength)
 			m_TxChunkQueue.push(pTmpChunk);
 			
 			nLength = nLength - nWriteLen;
-			pSrcbuffer = pSrcbuffer + nLength;
+			pSrcbuffer = pSrcbuffer + nWriteLen;
 		}
 	}
 	

@@ -16,7 +16,7 @@ int main()
 	int tfd, epfd, ret;
 	struct epoll_event ev;
 	struct itimerspec ts;
-	int msec = 10; // timer fires after 10msec
+	int msec = 1000; // timer fires after 10msec
 	uint64_t res;
 
 	printf("testcase start\n");
@@ -28,8 +28,8 @@ int main()
 	}
 	printf("created timerfd %d\n", tfd);
 
-	ts.it_interval.tv_sec = 0;
-	ts.it_interval.tv_nsec = 0;
+	ts.it_interval.tv_sec = msec / 1000;
+	ts.it_interval.tv_nsec = (msec % 1000) * 100000;
 	ts.it_value.tv_sec = msec / 1000;
 	ts.it_value.tv_nsec = (msec % 1000) * 1000000;
 
@@ -59,18 +59,21 @@ int main()
 
 	sleep(1);
 
-	memset(&ev, 0, sizeof(ev));
-	ret = epoll_wait(epfd, &ev, 1, 500); // wait up to 500ms for timer
-	if (ret < 0) {
-		printf("epoll_wait() failed: errno=%d\n", errno);
-		close(epfd);
-		close(tfd);
-		return EXIT_FAILURE;
-	}
-	printf("waited on epoll, ret=%d\n", ret);
+	while(1)
+	{
+		memset(&ev, 0, sizeof(ev));
+		ret = epoll_wait(epfd, &ev, 1, -1); // wait up to 500ms for timer
+		if (ret < 0) {
+			printf("epoll_wait() failed: errno=%d\n", errno);
+			close(epfd);
+			close(tfd);
+			return EXIT_FAILURE;
+		}
+		printf("waited on epoll, ret=%d\n", ret);
 
-	ret = read(tfd, &res, sizeof(res));
-	printf("read() returned %d, res=%" PRIu64 "\n", ret, res);
+		ret = read(tfd, &res, sizeof(res));
+		printf("read() returned %d, res=%" PRIu64 "\n", ret, res);
+	}
 
 	if (close(epfd) == -1) {
 		printf("failed to close epollfd: errno=%d\n", errno);

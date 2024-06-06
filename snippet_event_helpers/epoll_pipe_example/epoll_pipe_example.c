@@ -76,18 +76,18 @@ int main()
 			close(fds_out[1]); // file descriptor unused in child	
 
 			//
-			
-			for (size_t i = 0; i < 40; i++) 
+
+			do
 			{
 				memset(strRecd,0,sizeof(strRecd));
-				
 				n = read(fds_out[0], strRecd, sizeof(strRecd));
-				printf("Read %d bytes ...\n", n);
-				if(0 < n)
+				if (n > 0) 
 				{
-					printf("Recd [%d]: %s\n", n, strRecd);
+					//printf("Recd [%d]: %s\n", n, strRecd);
+					printf("%s", strRecd);
+					//puts(strRecd);
 				}
-			}
+			} while (n > 0);
 
 			//
 

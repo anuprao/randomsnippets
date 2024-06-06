@@ -169,12 +169,17 @@ int main()
 						{
 							int n;
 
-							memset(strRecd,0,sizeof(strRecd));
-							n = read(fd_output_read, strRecd, sizeof(strRecd));
-							if (n > 0) 
+							do
 							{
-								printf("Recd [%d]: %s\n", n, strRecd);
-							}
+								memset(strRecd,0,sizeof(strRecd));
+								n = read(fd_output_read, strRecd, sizeof(strRecd));
+								if (n > 0) 
+								{
+									//printf("Recd [%d]: %s\n", n, strRecd);
+									printf("%s", strRecd);
+									//puts(strRecd);
+								}
+							} while (n > 0);
 						}
 					}
 

@@ -55,7 +55,7 @@ int main()
 
 			unsigned char strRecd[128];
 
-			const char* pStrCallout = "Hello Console !";
+			//const char* pStrCallout = "Hello Console !";
 			
 			// parent process because return value non-zero. 
 
@@ -100,7 +100,7 @@ int main()
 
 			while(0 == quit)
 			{	
-				printf("In poll_wait ... \n");
+				//printf("In poll_wait ... \n");
 
 				// Running epoll_wait with empty list works like a simple delay
 				memset(&newEvents, 0, sizeof(newEvents));
@@ -118,27 +118,34 @@ int main()
 						{
 							int n;
 
-							memset(strRecd,0,sizeof(strRecd));
-							n = read(fd_input_read, strRecd, sizeof(strRecd));
-							if (n > 0) 
+							do
 							{
-								printf("Recd [%d]: %s\n", n, strRecd);
-
-								if(0 == strcmp((const char*)strRecd, pStrCallout))
+								memset(strRecd,0,sizeof(strRecd));
+								n = read(fd_input_read, strRecd, sizeof(strRecd));
+								if (n > 0) 
 								{
-									printf("Sending ... response\n");
+									//printf("Recd [%d]: %s\n", n, strRecd);
+									printf("%s", strRecd);
+									//puts(strRecd);
 
+									/*
+									if(0 == strcmp((const char*)strRecd, pStrCallout))
 									{
-										int nWritten = -1;
-										const char* pStrResponse= "Hello Operator !";
-										int nLen = strlen(pStrResponse);
-										nWritten = write(fd_output_write, pStrResponse, nLen);
-										fdatasync(fd_output_write);
+										printf("Sending ... response\n");
 
-										printf("Wrote %d on %d bytes !!!\n", nWritten, fd_output_write);
+										{
+											int nWritten = -1;
+											const char* pStrResponse= "Hello Operator !";
+											int nLen = strlen(pStrResponse);
+											nWritten = write(fd_output_write, pStrResponse, nLen);
+											fdatasync(fd_output_write);
+
+											printf("Wrote %d on %d bytes !!!\n", nWritten, fd_output_write);
+										}
 									}
+									*/
 								}
-							}
+							} while (n > 0);
 						}
 					}
 

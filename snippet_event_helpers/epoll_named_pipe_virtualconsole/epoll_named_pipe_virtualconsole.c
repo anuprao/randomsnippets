@@ -124,7 +124,7 @@ int main()
 							{
 								printf("Recd [%d]: %s\n", n, strRecd);
 
-								if(0 == strcmp(strRecd, pStrCallout));
+								if(0 == strcmp((const char*)strRecd, pStrCallout))
 								{
 									printf("Sending ... response\n");
 

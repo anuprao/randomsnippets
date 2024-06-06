@@ -68,7 +68,8 @@ int main()
 			{
 				perror("Could not open fd_output_read");
 			}
-
+			
+			// USe RDWR since, as WRONLY can only be used if the pipe is known to be aleady opened for reading
 			fd_input_write = open(FN_INPUT_WRITE, O_RDWR | O_NONBLOCK);
 			if(0 < fd_input_write)
 			{			
